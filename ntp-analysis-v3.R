@@ -2,8 +2,8 @@
 
 
 
-save.image("~/Desktop/RIIME/RIIME/final-recompile.RData")
-#save.image("~/Desktop/RIIME/RIIME/final-analyses-full-dat-backup.RData")
+#save.image("~/Desktop/RIIME/RIIME/final-recompile.RData")
+#save.image("~/Desktop/RIIME/RIIME/final-recompile-backup.RData")
 
 setwd("/Users/rockdoc/Desktop/RIIME/")
 
@@ -16,7 +16,7 @@ library(dplyr)
 library(tidyr)
 library(RColorBrewer)
 library(viridis)
-#library(ggpubr)
+library(ggpubr)
 library(grid)
 
 # library(rjags)
@@ -85,6 +85,18 @@ data.bs.2 <- filter(data.bs, ntp > 2)
 
 
 # II. Figure 1: General plots ----
+
+# for the figure legend, how man guilds have body size data from each Stage?
+
+names(data.bs.2)
+unique(data.bs.2$stage)
+
+nrow(data.bs.2 %>% filter(stage == "anisian"))
+nrow(data.bs.2 %>% filter(stage == "carnian"))
+nrow(data.bs.2 %>% filter(stage == "bathonian"))
+nrow(data.bs.2 %>% filter(stage == "aptian"))
+
+
 
 # ntp distribution of each Stage/community
 
@@ -313,7 +325,7 @@ plot4.1 <- mcmc_areas(hyp_4.1$samples, prob=.95, pars=c("H1", "H2", "H3")) +
   )) +
   theme(axis.text = element_text(size = 20),
         plot.title = element_text(size = 22, hjust = -0.6)) +
-  ggtitle(expression("C:"~ italic(log) ~ bar(bs)))
+  ggtitle(expression("C:"~log ~ bar(bs)))
 plot4.1
 
 
@@ -595,7 +607,8 @@ plot7.1 <- data.2 %>%
         axis.text = element_text(face="bold", size = 10),
         legend.position = "none") +
   xlab(expression(italic(bar(mcl)) )) +
-  ylab(expression(italic(bar(ntp)) ) )
+  ylab(expression(italic(bar(ntp)) ) ) +
+  annotate("text", x = 1, y = 4.5, label = "A", size = 7)
 plot7.1
 
 
@@ -632,8 +645,9 @@ plot7.2 <- data.2 %>%
         panel.grid.minor = element_blank(),
         axis.text = element_text(face="bold", size = 10),
         legend.position = "none") +
-  xlab("Guild mean body size (cm)") +
-  ylab(expression(italic(bar(ntp)) ) )
+  xlab("Guild mean body size (mm)") +
+  ylab(expression(italic(bar(ntp)) ) ) +
+  annotate("text", x = 1, y = 5, label = "B", size = 7)
 plot7.2
 
 
@@ -683,12 +697,14 @@ plot7.3 <- data.2 %>%
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
         axis.text = element_text(face="bold", size = 10),
-        legend.position = "bottom") +
+        legend.position = "bottom",
+        legend.text=element_text(size=12)) +
   xlab("Guild percent richness") +
-  ylab(expression(italic(bar(ntp)) ) )
+  ylab(expression(italic(bar(ntp)) ) ) +
+  annotate("text", x = 0, y = 4.6, label = "C", size = 7)
 plot7.3
 
-
+# This code wont allow me to annotate the final product, so using differen command below to attach different panels
 # grobify
 fig7.1 <- ggplotGrob(plot7.1) # A
 fig7.2 <- ggplotGrob(plot7.2) # B
@@ -698,6 +714,8 @@ fig7.3 <- ggplotGrob(plot7.3) # C
 fig7.final <- rbind(fig7.1, fig7.2, fig7.3, size = "first")
 grid.newpage()
 grid.draw(fig7.final)
+
+
 
 
 
@@ -798,14 +816,18 @@ ntp.change.fig.dat$stage <- factor(ntp.change.fig.dat$stage, levels = c("anisian
 
 
 # ntp fig
-plot8.1 <- ggplot(ntp.change.fig.dat, aes(x=stage, y=ntp, group=guild, color = ntp)) +
+plot8.1 <- ggplot(ntp.change.fig.dat, aes(x=stage, y=ntp, group=guild)) +
   geom_path(color = "gray") +
-  geom_point() +
+  geom_point(shape = 23, color = "black", size = 3, fill = "gray") +
   xlab("Stage") + ylab(expression(italic(bar(ntp)) )) +
   theme_bw() + 
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
-        legend.position = "bottom") +
+        legend.position = "bottom",
+        axis.text = element_text(size = 12),
+        legend.text=element_text(size=12),
+        legend.title=element_text(size=12),
+        axis.title=element_text(size=14)) +
   scale_color_continuous(name = expression(italic(bar(ntp)) ) ) +
   scale_x_discrete(breaks=c("anisian", "carnian", "bathonian", "aptian"), 
                    labels=c("Anisian", "Carnian", "Bathonian", "Aptian")) 
@@ -1001,10 +1023,694 @@ plot.modern <- combined.2 %>%
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
-        axis.text = element_text(face="bold", size = 10)) +
+        axis.text = element_text(face="bold", size = 10),
+        axis.title = element_text(face="bold", size = 12),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 12)) +
   xlab(expression(italic(bar(mcl)) )) +
-  ylab(expression(italic(bar(ntp)) ) )
+  ylab(expression(italic(bar(ntp)) ) ) +
+  guides(color = guide_legend(override.aes = list(size = 8)))
 plot.modern
+
+
+
+
+
+# XI. Revision: Sensitivity Analysis ----
+
+# load in data from communities with weighted randomized interactions
+
+# 10% randomization
+anisian.random.10   <- read.csv("~/Desktop/RIIME/Sensitivity-Analysis/weighted-raw/10-percent/Anisian_randomized_weighted_10.csv")
+carnian.random.10   <- read.csv("~/Desktop/RIIME/Sensitivity-Analysis/weighted-raw/10-percent/Carnian_randomized_weighted_10.csv")
+bathonian.random.10 <- read.csv("~/Desktop/RIIME/Sensitivity-Analysis/weighted-raw/10-percent/Bathonian_randomized_weighted_10.csv")
+aptian.random.10    <- read.csv("~/Desktop/RIIME/Sensitivity-Analysis/weighted-raw/10-percent/Aptian_randomized_weighted_10.csv")
+
+names(anisian.random.10)   <- c("sim", "sp.no", "guild", "guild.no", "w", "x", "y", "z", "mcl", "ntp")
+names(carnian.random.10)   <- c("sim", "sp.no", "guild", "guild.no", "w", "x", "y", "z", "mcl", "ntp")
+names(bathonian.random.10) <- c("sim", "sp.no", "guild", "guild.no", "w", "x", "y", "z", "mcl", "ntp")
+names(aptian.random.10)    <- c("sim", "sp.no", "guild", "guild.no", "w", "x", "y", "z", "mcl", "ntp")
+
+
+# 15% randomization
+anisian.random.15   <- read.csv("~/Desktop/RIIME/Sensitivity-Analysis/weighted-raw/15-percent/Anisian_randomized_weighted_15.csv")
+carnian.random.15   <- read.csv("~/Desktop/RIIME/Sensitivity-Analysis/weighted-raw/15-percent/Carnian_randomized_weighted_15.csv")
+bathonian.random.15 <- read.csv("~/Desktop/RIIME/Sensitivity-Analysis/weighted-raw/15-percent/Bathonian_randomized_weighted_15.csv")
+aptian.random.15    <- read.csv("~/Desktop/RIIME/Sensitivity-Analysis/weighted-raw/15-percent/Aptian_randomized_weighted_15.csv")
+
+names(anisian.random.15)   <- c("sim", "sp.no", "guild", "guild.no", "w", "x", "y", "z", "mcl", "ntp")
+names(carnian.random.15)   <- c("sim", "sp.no", "guild", "guild.no", "w", "x", "y", "z", "mcl", "ntp")
+names(bathonian.random.15) <- c("sim", "sp.no", "guild", "guild.no", "w", "x", "y", "z", "mcl", "ntp")
+names(aptian.random.15)    <- c("sim", "sp.no", "guild", "guild.no", "w", "x", "y", "z", "mcl", "ntp")
+
+
+
+## Calculate mean guild mcl and mean guild ntp for each Stage ----
+
+### 10% randomization ----
+
+# Anisian
+anisian.10.sum <- anisian.random.10 %>%
+  group_by(guild) %>%
+  summarize(mean_mcl = mean(mcl),
+            mean_ntp = mean(ntp)) %>%
+  filter(mean_ntp > 2)
+
+# Carnian
+carnian.10.sum <- carnian.random.10 %>%
+  group_by(guild) %>%
+  summarize(mean_mcl = mean(mcl),
+            mean_ntp = mean(ntp)) %>%
+  filter(mean_ntp > 2)
+
+# Bathonian
+bathonian.10.sum <- bathonian.random.10 %>%
+  group_by(guild) %>%
+  summarize(mean_mcl = mean(mcl),
+            mean_ntp = mean(ntp)) %>%
+  filter(mean_ntp > 2)
+
+# Aptian
+aptian.10.sum <- aptian.random.10 %>%
+  group_by(guild) %>%
+  summarize(mean_mcl = mean(mcl),
+            mean_ntp = mean(ntp)) %>%
+  filter(mean_ntp > 2)
+
+### 15% randomization ----
+
+# summarize data
+# Anisian
+anisian.15.sum <- anisian.random.15 %>%
+  group_by(guild) %>%
+  summarize(mean_mcl = mean(mcl),
+            mean_ntp = mean(ntp)) %>%
+  filter(mean_ntp > 2)
+
+# Carnian
+carnian.15.sum <- carnian.random.15 %>%
+  group_by(guild) %>%
+  summarize(mean_mcl = mean(mcl),
+            mean_ntp = mean(ntp)) %>%
+  filter(mean_ntp > 2)
+
+# Bathonian
+bathonian.15.sum <- bathonian.random.15 %>%
+  group_by(guild) %>%
+  summarize(mean_mcl = mean(mcl),
+            mean_ntp = mean(ntp)) %>%
+  filter(mean_ntp > 2)
+
+# Aptian
+aptian.15.sum <- aptian.random.15 %>%
+  group_by(guild) %>%
+  summarize(mean_mcl = mean(mcl),
+            mean_ntp = mean(ntp)) %>%
+  filter(mean_ntp > 2)
+
+
+
+
+
+## Compare randomized to original data ----
+
+
+### 10% randomization ----
+
+# Anisian
+
+# combine with original dataset to do comparison
+# anisian data used to make figure one
+# ntp > 2 and only guilds w body size data
+# anisian.original <- data.bs.2 %>%
+#   filter(stage == "anisian") %>%
+#   select("guild", "lc_mean", "ntp")
+# names(anisian.original) <- c("guild", "mean_mcl", "mean_ntp")
+# anisian.original$key <- rep("original", nrow(anisian.original))
+# anisian.original$stage <- rep("anisian", nrow(anisian.original))
+
+# to make a fair comparison, will subset randomized data to same guilds as original
+anisian.10.sum.filt <- anisian.10.sum %>%
+  filter(guild %in% anisian.original$guild)
+anisian.10.sum.filt$key <- rep("random", nrow(anisian.original))
+anisian.10.sum.filt$stage <- rep("anisian", nrow(anisian.original))
+
+anisian.sensitivity.test.10 <- rbind(anisian.original, anisian.10.sum.filt)
+
+
+# Carnian
+
+# combine with original dataset to do comparison
+# carnian data used to make figure one
+# ntp > 2 and only guilds w body size data
+# carnian.original <- data.bs.2 %>%
+#   filter(stage == "carnian") %>%
+#   select("guild", "lc_mean", "ntp")
+# names(carnian.original) <- c("guild", "mean_mcl", "mean_ntp")
+# carnian.original$key <- rep("original", nrow(carnian.original))
+# carnian.original$stage <- rep("carnian", nrow(carnian.original))
+
+# to make a fair comparison, will subset randomized data to same guilds as original
+carnian.10.sum.filt <- carnian.10.sum %>%
+  filter(guild %in% carnian.original$guild)
+carnian.10.sum.filt$key <- rep("random", nrow(carnian.original))
+carnian.10.sum.filt$stage <- rep("carnian", nrow(carnian.original))
+
+carnian.sensitivity.test.10 <- rbind(carnian.original, carnian.10.sum.filt)
+
+
+
+# Bathonian
+
+# combine with original dataset to do comparison
+# bathonian data used to make figure one
+# ntp > 2 and only guilds w body size data
+# bathonian.original <- data.bs.2 %>%
+#   filter(stage == "bathonian") %>%
+#   select("guild", "lc_mean", "ntp")
+# names(bathonian.original) <- c("guild", "mean_mcl", "mean_ntp")
+# bathonian.original$key <- rep("original", nrow(bathonian.original))
+# bathonian.original$stage <- rep("bathonian", nrow(bathonian.original))
+
+# to make a fair comparison, will subset randomized data to same guilds as original
+bathonian.10.sum.filt <- bathonian.10.sum %>%
+  filter(guild %in% bathonian.original$guild)
+bathonian.10.sum.filt$key <- rep("random", nrow(bathonian.original))
+bathonian.10.sum.filt$stage <- rep("bathonian", nrow(bathonian.original))
+
+bathonian.sensitivity.test.10 <- rbind(bathonian.original, bathonian.10.sum.filt)
+
+
+
+# Aptian
+
+# combine with original dataset to do comparison
+# aptian data used to make figure one
+# ntp > 2 and only guilds w body size data
+# aptian.original <- data.bs.2 %>%
+#   filter(stage == "aptian") %>%
+#   select("guild", "lc_mean", "ntp")
+# names(aptian.original) <- c("guild", "mean_mcl", "mean_ntp")
+# aptian.original$key <- rep("original", nrow(aptian.original))
+# aptian.original$stage <- rep("aptian", nrow(aptian.original))
+
+# to make a fair comparison, will subset randomized data to same guilds as original
+aptian.10.sum.filt <- aptian.10.sum %>%
+  filter(guild %in% aptian.original$guild)
+aptian.10.sum.filt$key <- rep("random", nrow(aptian.original))
+aptian.10.sum.filt$stage <- rep("aptian", nrow(aptian.original))
+
+aptian.sensitivity.test.10 <- rbind(aptian.original, aptian.10.sum.filt)
+
+
+
+# call for brms - doing this by stage
+
+# anisian original vs anisian 10%
+an.10.brm <- brm(mean_ntp ~ key, data = anisian.sensitivity.test.10)
+
+summary(an.10.brm)
+plot(an.10.brm)
+hist(resid(an.10.brm))
+pp_check(an.10.brm) # posterior parameter check. Checks if density plot for observed (y) is similar to that predicted (yrep)
+
+# hypothesis  
+an.10.hyp <- hypothesis(
+  an.10.brm,
+  hypothesis = c(
+    # compare Anisian Random to Anisian Original is just the keyrandom effect
+    "keyrandom = 0"
+  ))
+plot(an.10.hyp)
+
+supp01 <- mcmc_intervals(an.10.hyp$samples, prob=.95, prob_outer = 0.99, pars=c("H1")) +
+  geom_vline(xintercept = 0, color = "black", linetype = "dashed") +
+  scale_y_discrete(labels = c(
+    "H1" = "" )) +
+  theme(plot.title = element_text(size = 20, face = "bold"),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        axis.ticks.y = element_blank()) +
+  ylab("Anisian") +
+  xlab(expression(italic(bar(ntp)) ) ) +
+  xlim(-0.1, 4)
+supp01
+
+
+
+# carnian original vs carnian 15%
+ca.10.brm <- brm(mean_ntp ~ key, data = carnian.sensitivity.test.10)
+
+summary(ca.10.brm)
+plot(ca.10.brm)
+hist(resid(ca.10.brm))
+pp_check(ca.10.brm) # posterior parameter check. Checks if density plot for observed (y) is similar to that predicted (yrep)
+
+# hypothesis  
+ca.10.hyp <- hypothesis(
+  ca.10.brm,
+  hypothesis = c(
+    # compare Carnian Random to Carnian Original is just the keyrandom effect
+    "keyrandom = 0"
+  ))
+plot(ca.10.hyp)
+
+supp02 <- mcmc_intervals(ca.10.hyp$samples, prob=.95, prob_outer = 0.99, pars=c("H1")) +
+  geom_vline(xintercept = 0, color = "black", linetype = "dashed") +
+  scale_y_discrete(labels = c(
+    "H1" = "" )) +
+  theme(plot.title = element_text(size = 20, face = "bold"),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        axis.ticks.y = element_blank()) +
+  ylab("Carnian") +
+  xlim(-0.1, 4)
+supp02
+
+
+
+# bathonian original vs bathonian 15%
+ba.10.brm <- brm(mean_ntp ~ key, data = bathonian.sensitivity.test.10)
+
+summary(ba.10.brm)
+plot(ba.10.brm)
+hist(resid(ba.10.brm))
+pp_check(ba.10.brm) # posterior parameter check. Checks if density plot for observed (y) is similar to that predicted (yrep)
+
+# hypothesis  
+ba.10.hyp <- hypothesis(
+  ba.10.brm,
+  hypothesis = c(
+    # compare Bathonian Random to Bathonian Original is just the keyrandom effect
+    "keyrandom = 0"
+  ))
+plot(ba.10.hyp)
+
+supp03 <- mcmc_intervals(ba.10.hyp$samples, prob=.95, prob_outer = 0.99, pars=c("H1")) +
+  geom_vline(xintercept = 0, color = "black", linetype = "dashed") +
+  scale_y_discrete(labels = c(
+    "H1" = "" )) +
+  theme(plot.title = element_text(size = 20, face = "bold"),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        axis.ticks.y = element_blank()) +
+  ylab("Bathonian") +
+  xlim(-0.1, 4)
+supp03
+
+
+
+# aptian original vs aptian 15%
+ap.10.brm <- brm(mean_ntp ~ key, data = aptian.sensitivity.test.10)
+
+summary(ap.10.brm)
+plot(ap.10.brm)
+hist(resid(ap.10.brm))
+pp_check(ap.10.brm) # posterior parameter check. Checks if density plot for observed (y) is similar to that predicted (yrep)
+
+# hypothesis  
+ap.10.hyp <- hypothesis(
+  ap.10.brm,
+  hypothesis = c(
+    # compare Aptian Random to Aptian Original is just the keyrandom effect
+    "keyrandom = 0"
+  ))
+plot(ap.10.hyp)
+
+supp04 <- mcmc_intervals(ap.10.hyp$samples, prob=.95, prob_outer = 0.99, pars=c("H1")) +
+  geom_vline(xintercept = 0, color = "black", linetype = "dashed") +
+  ggtitle("10% Randomization Distribution \n- Original Distriubtion") +
+  scale_y_discrete(labels = c(
+    "H1" = "" )) +
+  theme(plot.title = element_text(size = 20, face = "bold"),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        axis.ticks.y = element_blank()) +
+  ylab("Aptian") +
+  xlim(-0.1, 4)
+supp04
+
+
+
+# This code wont allow me to annotate the final product, so using differen command below to attach different panels
+# grobify
+supp.fig.c01 <- ggplotGrob(supp01) # A
+supp.fig.c02 <- ggplotGrob(supp02) # B
+supp.fig.c03 <- ggplotGrob(supp03) # C
+supp.fig.c04 <- ggplotGrob(supp04) # C
+
+# final main text fig with ntp, mcl, bs
+supp.fig.c0 <- rbind(supp.fig.c04,
+                     supp.fig.c03,
+                     supp.fig.c02,
+                     supp.fig.c01,
+                     size = "first")
+grid.newpage()
+grid.draw(supp.fig.c0)
+
+
+
+
+
+### 15% randomization ----
+
+# Anisian
+
+# combine with original dataset to do comparison
+# anisian data used to make figure one
+# ntp > 2 and only guilds w body size data
+anisian.original <- data.bs.2 %>%
+  filter(stage == "anisian") %>%
+  select("guild", "lc_mean", "ntp")
+names(anisian.original) <- c("guild", "mean_mcl", "mean_ntp")
+anisian.original$key <- rep("original", nrow(anisian.original))
+anisian.original$stage <- rep("anisian", nrow(anisian.original))
+
+# to make a fair comparison, will subset randomized data to same guilds as original
+anisian.15.sum.filt <- anisian.15.sum %>%
+  filter(guild %in% anisian.original$guild)
+anisian.15.sum.filt$key <- rep("random", nrow(anisian.original))
+anisian.15.sum.filt$stage <- rep("anisian", nrow(anisian.original))
+
+anisian.sensitivity.test.15 <- rbind(anisian.original, anisian.15.sum.filt)
+
+
+# Carnian
+
+# combine with original dataset to do comparison
+# carnian data used to make figure one
+# ntp > 2 and only guilds w body size data
+carnian.original <- data.bs.2 %>%
+  filter(stage == "carnian") %>%
+  select("guild", "lc_mean", "ntp")
+names(carnian.original) <- c("guild", "mean_mcl", "mean_ntp")
+carnian.original$key <- rep("original", nrow(carnian.original))
+carnian.original$stage <- rep("carnian", nrow(carnian.original))
+
+# to make a fair comparison, will subset randomized data to same guilds as original
+carnian.15.sum.filt <- carnian.15.sum %>%
+  filter(guild %in% carnian.original$guild)
+carnian.15.sum.filt$key <- rep("random", nrow(carnian.original))
+carnian.15.sum.filt$stage <- rep("carnian", nrow(carnian.original))
+
+carnian.sensitivity.test.15 <- rbind(carnian.original, carnian.15.sum.filt)
+
+
+
+# Bathonian
+
+# combine with original dataset to do comparison
+# bathonian data used to make figure one
+# ntp > 2 and only guilds w body size data
+bathonian.original <- data.bs.2 %>%
+  filter(stage == "bathonian") %>%
+  select("guild", "lc_mean", "ntp")
+names(bathonian.original) <- c("guild", "mean_mcl", "mean_ntp")
+bathonian.original$key <- rep("original", nrow(bathonian.original))
+bathonian.original$stage <- rep("bathonian", nrow(bathonian.original))
+
+# to make a fair comparison, will subset randomized data to same guilds as original
+bathonian.15.sum.filt <- bathonian.15.sum %>%
+  filter(guild %in% bathonian.original$guild)
+bathonian.15.sum.filt$key <- rep("random", nrow(bathonian.original))
+bathonian.15.sum.filt$stage <- rep("bathonian", nrow(bathonian.original))
+
+bathonian.sensitivity.test.15 <- rbind(bathonian.original, bathonian.15.sum.filt)
+
+
+
+# Aptian
+
+# combine with original dataset to do comparison
+# aptian data used to make figure one
+# ntp > 2 and only guilds w body size data
+aptian.original <- data.bs.2 %>%
+  filter(stage == "aptian") %>%
+  select("guild", "lc_mean", "ntp")
+names(aptian.original) <- c("guild", "mean_mcl", "mean_ntp")
+aptian.original$key <- rep("original", nrow(aptian.original))
+aptian.original$stage <- rep("aptian", nrow(aptian.original))
+
+# to make a fair comparison, will subset randomized data to same guilds as original
+aptian.15.sum.filt <- aptian.15.sum %>%
+  filter(guild %in% aptian.original$guild)
+aptian.15.sum.filt$key <- rep("random", nrow(aptian.original))
+aptian.15.sum.filt$stage <- rep("aptian", nrow(aptian.original))
+
+aptian.sensitivity.test.15 <- rbind(aptian.original, aptian.15.sum.filt)
+
+# call for brms - doing this by stage
+
+# anisian original vs anisian 15%
+an.15.brm <- brm(mean_ntp ~ key, data = anisian.sensitivity.test.15)
+
+summary(an.15.brm)
+plot(an.15.brm)
+hist(resid(an.15.brm))
+pp_check(an.15.brm) # posterior parameter check. Checks if density plot for observed (y) is similar to that predicted (yrep)
+
+# hypothesis  
+an.15.hyp <- hypothesis(
+  an.15.brm,
+  hypothesis = c(
+    # compare Anisian Random to Anisian Original is just the keyrandom effect
+    "keyrandom = 0"
+  ))
+plot(an.15.hyp)
+
+supp11 <- mcmc_intervals(an.15.hyp$samples, prob=.95, prob_outer = 0.99, pars=c("H1")) +
+  geom_vline(xintercept = 0, color = "black", linetype = "dashed") +
+  scale_y_discrete(labels = c(
+    "H1" = "" )) +
+  theme(plot.title = element_text(size = 20, face = "bold"),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        axis.ticks.y = element_blank()) +
+  ylab("Anisian") +
+  xlab(expression(italic(bar(ntp)) ) ) +
+  xlim(-0.1, 4)
+supp11
+
+
+
+# carnian original vs carnian 15%
+ca.15.brm <- brm(mean_ntp ~ key, data = carnian.sensitivity.test.15)
+
+summary(ca.15.brm)
+plot(ca.15.brm)
+hist(resid(ca.15.brm))
+pp_check(ca.15.brm) # posterior parameter check. Checks if density plot for observed (y) is similar to that predicted (yrep)
+
+# hypothesis  
+ca.15.hyp <- hypothesis(
+  ca.15.brm,
+  hypothesis = c(
+    # compare Carnian Random to Carnian Original is just the keyrandom effect
+    "keyrandom = 0"
+  ))
+plot(ca.15.hyp)
+
+supp12 <- mcmc_intervals(ca.15.hyp$samples, prob=.95, prob_outer = 0.99, pars=c("H1")) +
+  geom_vline(xintercept = 0, color = "black", linetype = "dashed") +
+  scale_y_discrete(labels = c(
+    "H1" = "" )) +
+  theme(plot.title = element_text(size = 20, face = "bold"),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        axis.ticks.y = element_blank()) +
+  ylab("Carnian") +
+  xlim(-0.1, 4)
+supp12
+
+
+
+# bathonian original vs bathonian 15%
+ba.15.brm <- brm(mean_ntp ~ key, data = bathonian.sensitivity.test.15)
+
+summary(ba.15.brm)
+plot(ba.15.brm)
+hist(resid(ba.15.brm))
+pp_check(ba.15.brm) # posterior parameter check. Checks if density plot for observed (y) is similar to that predicted (yrep)
+
+# hypothesis  
+ba.15.hyp <- hypothesis(
+  ba.15.brm,
+  hypothesis = c(
+    # compare Bathonian Random to Bathonian Original is just the keyrandom effect
+    "keyrandom = 0"
+  ))
+plot(ba.15.hyp)
+
+supp13 <- mcmc_intervals(ba.15.hyp$samples, prob=.95, prob_outer = 0.99, pars=c("H1")) +
+  geom_vline(xintercept = 0, color = "black", linetype = "dashed") +
+  scale_y_discrete(labels = c(
+    "H1" = "" )) +
+  theme(plot.title = element_text(size = 20, face = "bold"),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        axis.ticks.y = element_blank()) +
+  ylab("Bathonian") +
+  xlim(-0.1, 4)
+supp13
+
+
+
+# aptian original vs aptian 15%
+ap.15.brm <- brm(mean_ntp ~ key, data = aptian.sensitivity.test.15)
+
+summary(ap.15.brm)
+plot(ap.15.brm)
+hist(resid(ap.15.brm))
+pp_check(ap.15.brm) # posterior parameter check. Checks if density plot for observed (y) is similar to that predicted (yrep)
+
+# hypothesis  
+ap.15.hyp <- hypothesis(
+  ap.15.brm,
+  hypothesis = c(
+    # compare Aptian Random to Aptian Original is just the keyrandom effect
+    "keyrandom = 0"
+  ))
+plot(ap.15.hyp)
+
+supp14 <- mcmc_intervals(ap.15.hyp$samples, prob=.95, prob_outer = 0.99, pars=c("H1")) +
+  geom_vline(xintercept = 0, color = "black", linetype = "dashed") +
+  ggtitle("15% Randomization Distribution \n- Original Distriubtion") +
+  scale_y_discrete(labels = c(
+    "H1" = "" )) +
+  theme(plot.title = element_text(size = 20, face = "bold"),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        axis.ticks.y = element_blank()) +
+  ylab("Aptian") +
+  xlim(-0.1, 4)
+supp14
+
+
+
+# This code wont allow me to annotate the final product, so using differen command below to attach different panels
+# grobify
+supp.fig.c11 <- ggplotGrob(supp11) # A
+supp.fig.c12 <- ggplotGrob(supp12) # B
+supp.fig.c13 <- ggplotGrob(supp13) # C
+supp.fig.c14 <- ggplotGrob(supp14) # C
+
+# final main text fig with ntp, mcl, bs
+supp.fig.c1 <- rbind(supp.fig.c14,
+                     supp.fig.c13,
+                     supp.fig.c12,
+                     supp.fig.c11,
+                     size = "first")
+grid.newpage()
+grid.draw(supp.fig.c1)
+
+
+
+
+
+
+## Compare randomized stages to each other ----
+
+### 10% randomization ----
+
+
+# creat df for brms call
+all.10 <- rbind(anisian.10.sum.filt,
+               carnian.10.sum.filt,
+               bathonian.10.sum.filt,
+               aptian.10.sum.filt)
+
+# brms call
+ntp.10.brm <- brm(mean_ntp ~ stage, data = all.10)
+
+summary(ntp.10.brm)
+plot(ntp.10.brm)
+hist(resid(ntp.10.brm))
+pp_check(ntp.10.brm) # posterior parameter check. Checks if density plot for observed (y) is similar to that predicted (yrep)
+
+
+# set up hypothesis tests
+hyp_10_percent <- hypothesis(
+  ntp.10.brm,
+  hypothesis = c(
+    # compare Carnian to Anisian is just the stagecarnian effect
+    "stagecarnian = 0",
+    # compare Carnian to Bathonian [bathonian - carnian]
+    "stagebathonian - stagecarnian = 0",
+    # compare Bathonian to Aptian [aptian - bathonian]
+    "stageaptian - stagebathonian = 0"
+  ))
+plot(hyp_10_percent)
+hyp_10_percent
+mcmc_dens(hyp_10_percent$samples) 
+
+
+# final ntp plot
+sens10.plot <- mcmc_areas(hyp_10_percent$samples, prob=.95, pars=c("H1", "H2", "H3")) +
+  geom_vline(xintercept = 0, color = "darkgray") +
+  scale_y_discrete(labels = c(
+    "H1" = expression(paste(mu[Carnian],"-",mu[Anisian])),
+    "H2" = expression(paste(mu[Bathonian],"-",mu[Carnian])),
+    "H3" = expression(paste(mu[Aptian],"-",mu[Bathonian]))
+  )) +
+  theme(axis.text = element_text(size = 20),
+        plot.title = element_text(size = 22, hjust = -0.4),
+        axis.text.x= element_text(size = 15) )
+sens10.plot
+
+
+
+### 15% randomization ----
+
+
+# creat df for brms call
+all.15 <- rbind(anisian.15.sum.filt,
+                carnian.15.sum.filt,
+                bathonian.15.sum.filt,
+                aptian.15.sum.filt)
+
+# brms call
+ntp.15.brm <- brm(mean_ntp ~ stage, data = all.15)
+
+summary(ntp.15.brm)
+plot(ntp.15.brm)
+hist(resid(ntp.15.brm))
+pp_check(ntp.15.brm) # posterior parameter check. Checks if density plot for observed (y) is similar to that predicted (yrep)
+
+
+# set up hypothesis tests
+hyp_15_percent <- hypothesis(
+  ntp.15.brm,
+  hypothesis = c(
+    # compare Carnian to Anisian is just the stagecarnian effect
+    "stagecarnian = 0",
+    # compare Carnian to Bathonian [bathonian - carnian]
+    "stagebathonian - stagecarnian = 0",
+    # compare Bathonian to Aptian [aptian - bathonian]
+    "stageaptian - stagebathonian = 0"
+  ))
+plot(hyp_15_percent)
+hyp_15_percent
+mcmc_dens(hyp_15_percent$samples) 
+
+
+# final ntp plot
+sens15.plot <- mcmc_areas(hyp_15_percent$samples, prob=.95, pars=c("H1", "H2", "H3")) +
+  geom_vline(xintercept = 0, color = "darkgray") +
+  scale_y_discrete(labels = c(
+    "H1" = expression(paste(mu[Carnian],"-",mu[Anisian])),
+    "H2" = expression(paste(mu[Bathonian],"-",mu[Carnian])),
+    "H3" = expression(paste(mu[Aptian],"-",mu[Bathonian]))
+  )) +
+  theme(axis.text = element_text(size = 20),
+        plot.title = element_text(size = 22, hjust = -0.4),
+        axis.text.x= element_text(size = 15) )
+sens15.plot
+#
+
+
+
+#### -----
+
 
 
 
